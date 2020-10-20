@@ -60,7 +60,7 @@ __global__ void trajectorySimulation(float *pinj, trajectoryHistory* history, in
 	extern __shared__ int sharedMemory[];
 	int id = blockIdx.x * blockDim.x + threadIdx.x;
 	int idx = threadIdx.x;
-	float r = 100.0001f;
+	//float r = 100.0001f;
 	float p = pinj[id];
 	float beta, sumac = 0.0f, Rig, dr, pp;
 	float Tkin = getTkininj(BLOCK_SIZE * THREAD_SIZE * padding + id);
@@ -69,7 +69,32 @@ __global__ void trajectorySimulation(float *pinj, trajectoryHistory* history, in
 	cuState[idx] = state[id];
 	int count;
 	bool generate = true;
-	for (; r < 100.0002f;) {
+
+	/* NOVY TEST, 28.7.2020 */
+	bool firstRun = true;
+
+	beta = sqrtf(Tkin*(Tkin + T0 + T0)) / (Tkin + T0);
+	Rig = sqrtf(Tkin*(Tkin + (2.0f * T0)));
+	float K = K0*beta*Rig;
+
+	generated[idx] = curand_box_muller(&cuState[idx]);
+
+	float arnum = generated[idx].x;
+
+	float r0 = 100.0001 + (arnum*sqrtf(2.0f * K * dt));
+
+	float r = r0;
+	int counter = 1;
+
+	/* NOVY TEST, end, 28.7.2020 */
+
+
+	for (; firstRun || r < 100.0002f;) {
+		if(counter >= 10 || r < 100.002f){
+			firstRun = false;
+		}
+		counter++;
+
 		beta = sqrtf(Tkin*(Tkin + T0 + T0)) / (Tkin + T0);
 		Rig = sqrtf(Tkin*(Tkin + (2.0f * T0)));
 		sumac += ((4.0f * V / (3.0f*r))*dt);
@@ -91,7 +116,7 @@ __global__ void trajectorySimulation(float *pinj, trajectoryHistory* history, in
 		if (beta>0.01f&&Tkin<100.0f) {
 			if ((r - 1.0f) / ((r - dr) - 1.0f) < 0.0f) {
 				count = atomicAdd(&countAtomic, 1);
-				history[count].setValues(sumac, r, p, id);
+				history[count].setValues(sumac, r, p, id, r0);
 			}
 		}
 		else if (beta<0.01f) {
@@ -178,7 +203,7 @@ void runFWMethod(simulationInput *simulation) {
 			if (counter != 0) {
 				gpuErrchk(cudaMemcpy(simulation->local_history, simulation->history, counter*sizeof(trajectoryHistory), cudaMemcpyDeviceToHost));
 				for (int j = 0; j < counter; ++j) {
-					fmt::fprintf(bb, " %g  %g  %g  %g %g \n", simulation->pinj[simulation->local_history[j].id], simulation->local_history[j].p, simulation->local_history[j].r, simulation->w[simulation->local_history[j].id], simulation->local_history[j].sumac);
+					fmt::fprintf(bb, " %g  %g  %g  %g %g %g\n", simulation->pinj[simulation->local_history[j].id], simulation->local_history[j].p, simulation->local_history[j].r, simulation->w[simulation->local_history[j].id], simulation->local_history[j].sumac, simulation->local_history[j].r0);
 				}
 			}
 		}

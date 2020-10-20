@@ -22,12 +22,14 @@ struct trajectoryHistory {
 	float r = -1.0f;
 	float p = -1.0f;
 	int id = -1;
+	float r0 = -1;
 
-	__device__ void setValues(float newSumac, float newR, float newP, int newId) {
+	__device__ void setValues(float newSumac, float newR, float newP, int newId, float newR0) {
 		sumac = newSumac;
 		r = newR;
 		p = newP;
 		id = newId;
+		r0 = newR0;
 	}
 };
 

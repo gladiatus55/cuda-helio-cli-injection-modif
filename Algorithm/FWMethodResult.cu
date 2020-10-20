@@ -14,7 +14,7 @@ static double T0 = m0 * c * c/(q*1e9);
 
 void FWMethodResult::runAlgorithm(ParamsCarrier *singleTone){
     int tem1, tem2, tem3;
-    double Rig, p1AU, Tkin, w0, w, p100AU, r, sumac;
+    double Rig, p1AU, Tkin, w0, w, p100AU, r, sumac, r0;
     double binb[25], binw[25], binc[25];
     double spe1e2[100] = {0}, spe1e2N[100] = {0};
     double spe4e2[400] = {0}, spe4e2N[400] = {0};
@@ -39,7 +39,7 @@ void FWMethodResult::runAlgorithm(ParamsCarrier *singleTone){
             actualLine = 0;
             while (targetLine != actualLine){
                 ++actualLine;
-                int reader = fscanf(inputFile, " %lf  %lf  %lf  %lf %lf \n", &p100AU, &p1AU,&r,&w0,&sumac);
+                int reader = fscanf(inputFile, " %lf  %lf  %lf  %lf %lf %lf\n", &p100AU, &p1AU,&r,&w0,&sumac, &r0);
                 if(reader == -1){
 			return; 
 		}
